@@ -515,7 +515,7 @@ print(train_data_custom.classes == train_data.classes)
 print(train_data_custom.class_to_idx == train_data.class_to_idx)
 
 
-# ## 5.3 Create a fn to display random images from customizerd dataset
+# ### 5.3 Create a fn to display random images from customizerd dataset
 
 # In[116]:
 
@@ -582,7 +582,7 @@ display_random_images(train_data_custom,
                       seed=None) # Try setting the seed for reproducible images
 
 
-# ## 5.4 turn custom loaded img into DataLoader's
+# ### 5.4 turn custom loaded img into DataLoader's
 
 # In[120]:
 
@@ -611,4 +611,173 @@ img_custom, label_custom = next(iter(train_dataloader_custom))
 # Batch size will now be 1, try changing the batch_size parameter above and see what happens
 print(f"Image shape: {img_custom.shape} -> [batch_size, color_channels, height, width]")
 print(f"Label shape: {label_custom.shape}")
+
+
+# ## 6. Data augmentation - other forms of transformation
+# 
+# Adding diversity to training data, eg image -> rotation, darken, shift, zoom, etc
+# 
+# Hope our model learn more generalized
+
+# In[122]:
+
+
+from torchvision import transforms
+
+train_transforms = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.TrivialAugmentWide(num_magnitude_bins=31), # how intense
+    transforms.ToTensor() # use ToTensor() last to get everything between 0 & 1
+])
+
+# Don't need to perform augmentation on the test data
+test_transforms = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor()
+])
+
+
+# In[123]:
+
+
+# Get all image paths
+image_path_list = list(image_path.glob("*/*/*.jpg"))
+
+# Plot random images
+plot_transformed_images(
+    image_paths=image_path_list,
+    transform=train_transforms,
+    n=3,
+    seed=None
+)
+#plt.show()
+
+
+# ## 7. Model 0: TinyVGG without a data augmentation
+
+# ### 7.1 creating transforms and loading data for Model 0
+
+# In[124]:
+
+
+# Create simple transform
+simple_transform = transforms.Compose([
+    transforms.Resize((64, 64)),
+    transforms.ToTensor(),
+])
+
+
+# In[125]:
+
+
+# 1. Load and transform data
+from torchvision import datasets
+train_data_simple = datasets.ImageFolder(root=train_dir, transform=simple_transform)
+test_data_simple = datasets.ImageFolder(root=test_dir, transform=simple_transform)
+
+# 2. Turn data into DataLoaders
+import os
+from torch.utils.data import DataLoader
+
+# Setup batch size and number of workers
+BATCH_SIZE = 32
+NUM_WORKERS = os.cpu_count()
+print(f"Creating DataLoader's with batch size {BATCH_SIZE} and {NUM_WORKERS} workers.")
+
+# Create DataLoader's
+train_dataloader_simple = DataLoader(train_data_simple,
+                                     batch_size=BATCH_SIZE,
+                                     shuffle=True,
+                                     num_workers=NUM_WORKERS)
+
+test_dataloader_simple = DataLoader(test_data_simple,
+                                    batch_size=BATCH_SIZE,
+                                    shuffle=False,
+                                    num_workers=NUM_WORKERS)
+
+train_dataloader_simple, test_dataloader_simple
+
+
+# ### 7.2 Create TinyVGG model class
+
+# In[126]:
+
+
+class TinyVGG(nn.Module):
+    """
+    Model architecture copying TinyVGG from:
+    https://poloclub.github.io/cnn-explainer/
+    """
+    def __init__(self, input_shape: int, hidden_units: int, output_shape: int) -> None:
+        super().__init__()
+        self.conv_block_1 = nn.Sequential(
+            nn.Conv2d(in_channels=input_shape,
+                      out_channels=hidden_units,
+                      kernel_size=3, # how big is the square that's going over the image?
+                      stride=1, # default
+                      padding=1), # options = "valid" (no padding) or "same" (output has same shape as input) or int for specific number
+            nn.ReLU(),
+            nn.Conv2d(in_channels=hidden_units,
+                      out_channels=hidden_units,
+                      kernel_size=3,
+                      stride=1,
+                      padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2,
+                         stride=2) # default stride value is same as kernel_size
+        )
+        self.conv_block_2 = nn.Sequential(
+            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+        self.classifier = nn.Sequential(
+            nn.Flatten(),
+            # Where did this in_features shape come from?
+            # It's because each layer of our network compresses and changes the shape of our inputs data.
+            nn.Linear(in_features=hidden_units*16*16,
+                      out_features=output_shape)
+        )
+
+    def forward(self, x: torch.Tensor):
+        x = self.conv_block_1(x)
+        # print(x.shape)
+        x = self.conv_block_2(x)
+        # print(x.shape)
+        x = self.classifier(x)
+        # print(x.shape)
+        return x
+        # return self.classifier(self.conv_block_2(self.conv_block_1(x))) # <- leverage the benefits of operator fusion
+
+torch.manual_seed(42)
+model_0 = TinyVGG(input_shape=3, # number of color channels (3 for RGB)
+                  hidden_units=10,
+                  output_shape=len(train_data.classes)).to(device)
+print(model_0)
+
+
+# ### 7.3 fw pass on a single img
+
+# In[127]:
+
+
+# 1. Get a batch of images and labels from the DataLoader
+img_batch, label_batch = next(iter(train_dataloader_simple))
+
+# 2. Get a single image from the batch and unsqueeze the image so its shape fits the model
+img_single, label_single = img_batch[0].unsqueeze(dim=0), label_batch[0]
+print(f"Single image shape: {img_single.shape}\n")
+
+# 3. Perform a forward pass on a single image
+model_0.eval()
+with torch.inference_mode():
+    pred = model_0(img_single.to(device))
+
+# 4. Print out what's happening and convert model logits -> pred probs -> pred label
+print(f"Output logits:\n{pred}\n")
+print(f"Output prediction probabilities:\n{torch.softmax(pred, dim=1)}\n")
+print(f"Output prediction label:\n{torch.argmax(torch.softmax(pred, dim=1), dim=1)}\n")
+print(f"Actual label:\n{label_single}")
 
