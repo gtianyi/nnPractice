@@ -145,12 +145,128 @@ plt.figure(figsize=(10,7))
 plt.imshow(img_as_array)
 plt.title(f"Image class: {image_class} | Image shape: {img_as_array.shape} -> [h, w, c]")
 plt.axis(False)
-if device == "mps":
-  plt.show()
+# if device == "mps":
+#   plt.show()
 
 
 # In[ ]:
 
 
 
+
+
+# ## 3. Trainsforming data (img /text / auido -> tensor)
+# 
+# 1. Trun data intot tensors
+# 2. Trun it into a `torch.utils.data.Dataset` and subsequently a `torch.utils.data.DataLoader`, called `DataSet` and `DataLoader`
+
+# In[55]:
+
+
+import torch
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
+
+# ## 3.1 Transforming data with torchvision.transforms
+
+# In[56]:
+
+
+# write a transform for image
+data_transform = transforms.Compose([
+    # Resize imgs to 64x64
+    transforms.Resize(size=(64,64)),
+    # Flip the images randomly on the horizontal
+    transforms.RandomHorizontalFlip(p=0.5),
+    # Turn img into torch.Tensor
+    transforms.ToTensor()
+])
+
+
+# In[62]:
+
+
+print(f"data_transform shape  {data_transform(img).shape}")
+
+
+# In[68]:
+
+
+def plot_transformed_images(image_paths, transform, n=3, seed=42):
+  """
+  Selects random imgs from path and loads/transforms
+  them then plots the original vs the transformed version.
+  """
+  if seed:
+    random.seed(seed)
+  random_image_paths = random.sample(image_paths, k=n)
+  for image_path in random_image_paths:
+    with Image.open(image_path) as f:
+      fig, ax= plt.subplots(nrows=1, ncols=2)
+      ax[0].imshow(f)
+      ax[0].set_title(f"Original\nSize:{f.size}")
+      ax[0].axis(False)
+
+      # Transform and plot target img
+      transformed_image = transform(f).permute(1, 2, 0) # need to change shape for matplotlib (CHW -> HWC)
+      ax[1].imshow(transformed_image)
+      ax[1].set_title(f"transformed\nSize: {transformed_image.shape}")
+      ax[1].axis("off")
+
+      fig.suptitle(f"Class: {image_path.parent.stem}", fontsize=16)
+      #plt.show()
+
+plot_transformed_images(image_paths=image_path_list,
+                        transform=data_transform,
+                        n=3,
+                        seed=None)
+
+
+
+# ## 4. Option 1: Loading img data using ImageFolder
+
+# In[70]:
+
+
+# Use ImageFolder to create dataset(s)
+from torchvision import datasets
+train_data = datasets.ImageFolder(root=train_dir,
+                                  transform=data_transform, # transform for the data
+                                  target_transform=None # transform for the labels/tarrgets, we don't need it bc we use dir_stem as lable)
+                                 )
+
+test_data = datasets.ImageFolder(root=test_dir,
+                                 transform=data_transform)
+
+train_data, test_data
+
+
+# In[72]:
+
+
+# get class names as list
+class_names = train_data.classes
+print(class_names)
+
+
+# In[73]:
+
+
+# get class names as dict
+class_dict = train_data.class_to_idx
+print(class_dict)
+
+
+# In[74]:
+
+
+# check the len of our dataset
+len(train_data), len(test_data)
+
+
+# In[76]:
+
+
+print(train_data.samples[0])
 
