@@ -362,8 +362,10 @@ print(f"Label shape: {label.shape}")
 # 1. Want to be able to load img from file
 # 2. want to ba able to get class name from the dataset
 # 3. want to be able to get classes as dict from the dataset
+# 
+# By subclassing `torch.utils.data.Dataset`
 
-# In[ ]:
+# In[102]:
 
 
 import os
@@ -371,4 +373,48 @@ import pathlib
 import torch
 
 from PIL import Image
+from torch.utils.data import Dataset
+from torchvision import transforms
+from typing import Tuple, Dict, List
+
+# Instance of torchvision.datasets.ImageFolder()
+print(train_data.classes, train_data.class_to_idx)
+
+
+# ### 5.1 Creating a helper fn to get class names
+# 
+# We want to:
+# 1. Get the class names using `os.scandir()` to traverse a target dirctory
+# 2. Raise an error if the class names aren't found
+# 3. Turn class names into a dict and list and return them
+
+# In[106]:
+
+
+# setup path for target directory
+target_directory = train_dir
+print(f"Target dir: {target_directory}")
+
+# gethe class names from the target directory
+class_names_found = sorted([entry.name for entry in list(os.scandir(target_directory))])
+class_names_found
+
+
+# In[109]:
+
+
+def find_classes(directory: str) -> Tuple[List[str], Dict[str, int]]:
+  """Finds the classes folder names in a target directory."""
+  # 1. get the class names by scanning the target directory
+  classes = sorted([entry.name for entry in os.scandir(directory) if entry.is_dir()])
+
+  # 2. raise an error if classes names could not be found
+  if not classes:
+    raise FileNotFoundError(f"Couldn't find any classes in {directory}... please check file structure.")
+
+  # 3. create a directory of index labels
+  class_to_idx = {class_name: i for i , class_name in enumerate(classes)}
+  return classes, class_to_idx
+
+print(find_classes(target_directory))
 
