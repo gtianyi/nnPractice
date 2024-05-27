@@ -32,7 +32,7 @@ print(f"on device {device}")
 # 
 # Try things on a small scale and increase scale when necessary, speed up experiment
 
-# In[16]:
+# In[27]:
 
 
 import requests
@@ -48,4 +48,85 @@ if image_path.is_dir():
 else:
   print(f"{image_path} does not exist, creating one...")
   image_path.mkdir(parents=True, exist_ok=True)
+
+# Download pizza, steak and sushi data
+with open(data_path / "pizza_steak_sushi.zip", "wb") as f:
+  request = requests.get("https://github.com/mrdbourke/pytorch-deep-learning/raw/main/data/pizza_steak_sushi.zip")
+  print(f"Downloading pizza, steak, sushi data...")
+  f.write(request.content)
+
+# Unzip pizza, steak, sushi data
+with zipfile.ZipFile(data_path/ "pizza_steak_sushi.zip", "r") as zip_ref:
+  print("Unzipping pizza, steak and sushi data...")
+  zip_ref.extractall(image_path)
+
+
+
+# ## 2. Becoming one with the data (data prep and exploration)
+
+# In[24]:
+
+
+import os
+def walk_through_dir(dir_path):
+  """Walk throught dir_path returning its contents."""
+  for dirpath, dirnames, filenames in os.walk(dir_path):
+    print(f"There are {len(dirnames)} directories and {len(filenames)} images in '{dirpath}'. ")
+
+
+# In[28]:
+
+
+walk_through_dir(image_path)
+
+
+# In[26]:
+
+
+# setup train and test paths
+train_dir = image_path/ "train"
+test_dir = image_path / "test"
+
+train_dir, test_dir
+
+
+# ### 2.1 Visualizing images
+# 
+# 1. get all of the image paths
+# 2. pick a random image path using Python's `randome.choice()`
+# 3. get the img class name using `pathlib.Path.parent.stem`
+# 4. viz img with Python's Pillow  `PIL`
+# 5. show the img metadata
+
+# In[48]:
+
+
+import random
+from PIL import Image
+
+# set seed
+#random.seed(42)
+
+# 1. get all the img paths
+image_path_list = list(image_path.glob("*/*/*.jpg"))
+
+# 2. pick a random image path
+random_image_path = random.choice(image_path_list)
+
+# 3. get image class from path name (name of dir)
+image_class = random_image_path.parent.stem
+
+# 4. open img
+img = Image.open(random_image_path)
+
+# 5. Print metadata
+print(f"Random image path: {random_image_path}")
+print(f"Image class: {image_class}")
+print(f"Image height: {img.height}")
+print(f"Image width: {img.width}")
+# device agnostic img show
+if device == "mps":
+  img.show()
+else:
+  display(img)
 
