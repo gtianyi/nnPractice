@@ -1,11 +1,39 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # 04 PyTorch Custom Datasets Notebook
+# 
+# Get our own data into PyTorch - via custom datasets
+# 
+# 
+
+# ## 0. Importing PyTorch and Setting Up Device Agnostic Code
+
+# In[ ]:
+
+
 import torch
 from torch import nn
 
-torch.__version__
+print(f"torch version {torch.__version__}")
+
+
+# In[15]:
+
 
 # setup device-agnostic code for gpu / mps / cpu
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
-device
+print(f"on device {device}")
+
+
+# ## 1. Get data
+# 
+# Subset of Food101 dataset
+# 
+# Try things on a small scale and increase scale when necessary, speed up experiment
+
+# In[16]:
+
 
 import requests
 import zipfile
@@ -20,3 +48,4 @@ if image_path.is_dir():
 else:
   print(f"{image_path} does not exist, creating one...")
   image_path.mkdir(parents=True, exist_ok=True)
+
