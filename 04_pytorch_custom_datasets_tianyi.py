@@ -258,15 +258,101 @@ class_dict = train_data.class_to_idx
 print(class_dict)
 
 
-# In[74]:
+# In[77]:
 
 
 # check the len of our dataset
-len(train_data), len(test_data)
+print(len(train_data), len(test_data))
 
 
 # In[76]:
 
 
 print(train_data.samples[0])
+
+
+# In[81]:
+
+
+# index on the train_data DataSet to get a single image and label
+img, label = train_data[0][0], train_data[0][1]
+
+print(f"Image tensor:\n {img}")
+print(f"Image shape: {img.shape}")
+print(f"Image datatype: {img.dtype}")
+print(f"Image label: {label}")
+print(f"label datatype: {type(label)}")
+
+
+# In[82]:
+
+
+# Rearrange the order of the dimensions
+img_permute = img.permute(1,2,0)
+
+# print out different shapes
+print(f"Original shape: {img.shape} -> CHW")
+print(f"Image permute shape: {img_permute.shape} -> HWC")
+
+# plot the image
+plt.figure(figsize=(10,7))
+plt.imshow(img_permute)
+plt.axis(False)
+plt.title(class_names[label], fontsize=14)
+
+
+# ## 4.1 Turn loaded images into `DataLoader`s
+# 
+# A `DataLoader` is used for customized `batch_size`
+
+# In[83]:
+
+
+import os
+print(f"cpu count: {os.cpu_count()}")
+
+
+# In[93]:
+
+
+# Trun train and test datasets into DataLoader's
+from torch.utils.data import DataLoader
+
+#BATCH_SIZE=32
+#CPU_COUNT = os.cpu_count()
+BATCH_SIZE=1
+CPU_COUNT =1
+
+train_dataloader = DataLoader(
+    dataset=train_data,
+    batch_size=BATCH_SIZE,
+    num_workers=CPU_COUNT,
+    shuffle=True
+)
+
+test_dataloader = DataLoader(
+    dataset=test_data,
+    batch_size=BATCH_SIZE,
+    num_workers=CPU_COUNT,
+    shuffle=False
+)
+
+print(f"dataloader size: {len(train_dataloader)}, {len(test_dataloader)}")
+
+
+# In[99]:
+
+
+# To avoid python spawn multiprocessing issue on python 3.8+ in MacOS
+# we need to do the following to avoid Dataloader crashes if num_worker>0
+# https://github.com/pytorch/pytorch/issues/46648
+import multiprocessing
+
+if device == "mps":
+  multiprocessing.set_start_method("fork")
+
+img, label = next(iter(train_dataloader))
+
+print(f"Image shape: {img.shape} -> [batch size, C, H, W]")
+print(f"Label shape: {label.shape}")
 
