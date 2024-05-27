@@ -98,7 +98,7 @@ train_dir, test_dir
 # 4. viz img with Python's Pillow  `PIL`
 # 5. show the img metadata
 
-# In[48]:
+# In[49]:
 
 
 import random
@@ -129,4 +129,28 @@ if device == "mps":
   img.show()
 else:
   display(img)
+
+
+# In[53]:
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Trun the img into an array
+img_as_array = np.array(img)
+
+# plot the img with matplotlib
+plt.figure(figsize=(10,7))
+plt.imshow(img_as_array)
+plt.title(f"Image class: {image_class} | Image shape: {img_as_array.shape} -> [h, w, c]")
+plt.axis(False)
+if device == "mps":
+  plt.show()
+
+
+# In[ ]:
+
+
+
 
