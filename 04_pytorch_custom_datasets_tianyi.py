@@ -478,3 +478,137 @@ class ImageFolderCustom(Dataset):
         else:
             return img, class_idx # return data, label (X, y)
 
+
+# In[111]:
+
+
+# Augment train data
+train_transforms = transforms.Compose([
+    transforms.Resize((64, 64)),
+    transforms.RandomHorizontalFlip(p=0.5),
+    transforms.ToTensor()
+])
+
+# Don't augment test data, only reshape
+test_transforms = transforms.Compose([
+    transforms.Resize((64, 64)),
+    transforms.ToTensor()
+])
+
+
+# In[112]:
+
+
+train_data_custom = ImageFolderCustom(targ_dir=train_dir,
+                                      transform=train_transforms)
+test_data_custom = ImageFolderCustom(targ_dir=test_dir,
+                                     transform=test_transforms)
+train_data_custom, test_data_custom
+
+
+# In[114]:
+
+
+# Check for equality amongst our custom Dataset and ImageFolder Dataset
+print((len(train_data_custom) == len(train_data)) & (len(test_data_custom) == len(test_data)))
+print(train_data_custom.classes == train_data.classes)
+print(train_data_custom.class_to_idx == train_data.class_to_idx)
+
+
+# ## 5.3 Create a fn to display random images from customizerd dataset
+
+# In[116]:
+
+
+# 1. Take in a Dataset as well as a list of class names
+def display_random_images(dataset: torch.utils.data.dataset.Dataset,
+                          classes: List[str] = None,
+                          n: int = 10,
+                          display_shape: bool = True,
+                          seed: int = None):
+
+    # 2. Adjust display if n too high
+    if n > 10:
+        n = 10
+        display_shape = False
+        print(f"For display purposes, n shouldn't be larger than 10, setting to 10 and removing shape display.")
+
+    # 3. Set random seed
+    if seed:
+        random.seed(seed)
+
+    # 4. Get random sample indexes
+    random_samples_idx = random.sample(range(len(dataset)), k=n)
+
+    # 5. Setup plot
+    plt.figure(figsize=(16, 8))
+
+    # 6. Loop through samples and display random samples
+    for i, targ_sample in enumerate(random_samples_idx):
+        targ_image, targ_label = dataset[targ_sample][0], dataset[targ_sample][1]
+
+        # 7. Adjust image tensor shape for plotting: [color_channels, height, width] -> [color_channels, height, width]
+        targ_image_adjust = targ_image.permute(1, 2, 0)
+
+        # Plot adjusted samples
+        plt.subplot(1, n, i+1)
+        plt.imshow(targ_image_adjust)
+        plt.axis("off")
+        if classes:
+            title = f"class: {classes[targ_label]}"
+            if display_shape:
+                title = title + f"\nshape: {targ_image_adjust.shape}"
+        plt.title(title)
+    #plt.show()
+
+
+# In[117]:
+
+
+# Display random images from ImageFolder created Dataset
+display_random_images(train_data,
+                      n=5,
+                      classes=class_names,
+                      seed=None)
+
+
+# In[118]:
+
+
+# Display random images from ImageFolderCustom Dataset
+display_random_images(train_data_custom,
+                      n=12,
+                      classes=class_names,
+                      seed=None) # Try setting the seed for reproducible images
+
+
+# ## 5.4 turn custom loaded img into DataLoader's
+
+# In[120]:
+
+
+# Turn train and test custom Dataset's into DataLoader's
+from torch.utils.data import DataLoader
+train_dataloader_custom = DataLoader(dataset=train_data_custom, # use custom created train Dataset
+                                     batch_size=1, # how many samples per batch?
+                                     num_workers=0, # how many subprocesses to use for data loading? (higher = more)
+                                     shuffle=True) # shuffle the data?
+
+test_dataloader_custom = DataLoader(dataset=test_data_custom, # use custom created test Dataset
+                                    batch_size=1,
+                                    num_workers=0,
+                                    shuffle=False) # don't usually need to shuffle testing data
+
+train_dataloader_custom, test_dataloader_custom
+
+
+# In[121]:
+
+
+# Get image and label from custom DataLoader
+img_custom, label_custom = next(iter(train_dataloader_custom))
+
+# Batch size will now be 1, try changing the batch_size parameter above and see what happens
+print(f"Image shape: {img_custom.shape} -> [batch_size, color_channels, height, width]")
+print(f"Label shape: {label_custom.shape}")
+
