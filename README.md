@@ -5,6 +5,20 @@
 - [code example](https://www.google.com/url?q=https://github.com/mrdbourke/pytorch-deep-learning&sa=D&source=calendar&usd=2&usg=AOvVaw1HX0vYMOSwLW9a0ex75ZwZ) 
 - [slides](https://www.google.com/url?q=https://www.learnpytorch.io/&sa=D&source=calendar&usd=2&usg=AOvVaw0AeFTvOqo91TcyGg8bZfnU)
 
+## Pre-request py lib
+
+```bash
+brew install python@3.8
+```
+
+```bash
+brew install jupyter
+```
+
+```bash
+pip3 install torch torchvision matplotlib Pillow
+```
+
 ## Useful CMD
 1. copy notbook from google drive to local
 ```bash

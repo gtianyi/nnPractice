@@ -356,3 +356,19 @@ img, label = next(iter(train_dataloader))
 print(f"Image shape: {img.shape} -> [batch size, C, H, W]")
 print(f"Label shape: {label.shape}")
 
+
+# ## 5. Option 2: Loading Image data with a Custom `DataSet`
+# 
+# 1. Want to be able to load img from file
+# 2. want to ba able to get class name from the dataset
+# 3. want to be able to get classes as dict from the dataset
+
+# In[ ]:
+
+
+import os
+import pathlib
+import torch
+
+from PIL import Image
+
