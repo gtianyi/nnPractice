@@ -9,7 +9,7 @@
 
 # ## 0. Importing PyTorch and Setting Up Device Agnostic Code
 
-# In[ ]:
+# In[2]:
 
 
 import torch
@@ -18,7 +18,7 @@ from torch import nn
 print(f"torch version {torch.__version__}")
 
 
-# In[15]:
+# In[3]:
 
 
 # setup device-agnostic code for gpu / mps / cpu
@@ -32,7 +32,7 @@ print(f"on device {device}")
 # 
 # Try things on a small scale and increase scale when necessary, speed up experiment
 
-# In[27]:
+# In[4]:
 
 
 import requests
@@ -64,7 +64,7 @@ with zipfile.ZipFile(data_path/ "pizza_steak_sushi.zip", "r") as zip_ref:
 
 # ## 2. Becoming one with the data (data prep and exploration)
 
-# In[24]:
+# In[5]:
 
 
 import os
@@ -74,13 +74,13 @@ def walk_through_dir(dir_path):
     print(f"There are {len(dirnames)} directories and {len(filenames)} images in '{dirpath}'. ")
 
 
-# In[28]:
+# In[6]:
 
 
 walk_through_dir(image_path)
 
 
-# In[26]:
+# In[7]:
 
 
 # setup train and test paths
@@ -98,7 +98,7 @@ train_dir, test_dir
 # 4. viz img with Python's Pillow  `PIL`
 # 5. show the img metadata
 
-# In[49]:
+# In[8]:
 
 
 import random
@@ -131,7 +131,7 @@ else:
   display(img)
 
 
-# In[53]:
+# In[9]:
 
 
 import numpy as np
@@ -149,7 +149,7 @@ plt.axis(False)
 #   plt.show()
 
 
-# In[ ]:
+# In[9]:
 
 
 
@@ -160,7 +160,7 @@ plt.axis(False)
 # 1. Trun data intot tensors
 # 2. Trun it into a `torch.utils.data.Dataset` and subsequently a `torch.utils.data.DataLoader`, called `DataSet` and `DataLoader`
 
-# In[55]:
+# In[10]:
 
 
 import torch
@@ -170,7 +170,7 @@ from torchvision import datasets, transforms
 
 # ## 3.1 Transforming data with torchvision.transforms
 
-# In[56]:
+# In[11]:
 
 
 # write a transform for image
@@ -184,13 +184,13 @@ data_transform = transforms.Compose([
 ])
 
 
-# In[62]:
+# In[12]:
 
 
 print(f"data_transform shape  {data_transform(img).shape}")
 
 
-# In[68]:
+# In[13]:
 
 
 def plot_transformed_images(image_paths, transform, n=3, seed=42):
@@ -226,7 +226,7 @@ plot_transformed_images(image_paths=image_path_list,
 
 # ## 4. Option 1: Loading img data using ImageFolder
 
-# In[70]:
+# In[14]:
 
 
 # Use ImageFolder to create dataset(s)
@@ -242,7 +242,7 @@ test_data = datasets.ImageFolder(root=test_dir,
 train_data, test_data
 
 
-# In[72]:
+# In[15]:
 
 
 # get class names as list
@@ -250,7 +250,7 @@ class_names = train_data.classes
 print(class_names)
 
 
-# In[73]:
+# In[16]:
 
 
 # get class names as dict
@@ -258,20 +258,20 @@ class_dict = train_data.class_to_idx
 print(class_dict)
 
 
-# In[77]:
+# In[17]:
 
 
 # check the len of our dataset
 print(len(train_data), len(test_data))
 
 
-# In[76]:
+# In[18]:
 
 
 print(train_data.samples[0])
 
 
-# In[81]:
+# In[19]:
 
 
 # index on the train_data DataSet to get a single image and label
@@ -284,7 +284,7 @@ print(f"Image label: {label}")
 print(f"label datatype: {type(label)}")
 
 
-# In[82]:
+# In[20]:
 
 
 # Rearrange the order of the dimensions
@@ -305,14 +305,14 @@ plt.title(class_names[label], fontsize=14)
 # 
 # A `DataLoader` is used for customized `batch_size`
 
-# In[83]:
+# In[21]:
 
 
 import os
 print(f"cpu count: {os.cpu_count()}")
 
 
-# In[93]:
+# In[22]:
 
 
 # Trun train and test datasets into DataLoader's
@@ -340,7 +340,7 @@ test_dataloader = DataLoader(
 print(f"dataloader size: {len(train_dataloader)}, {len(test_dataloader)}")
 
 
-# In[99]:
+# In[23]:
 
 
 # To avoid python spawn multiprocessing issue on python 3.8+ in MacOS
@@ -365,7 +365,7 @@ print(f"Label shape: {label.shape}")
 # 
 # By subclassing `torch.utils.data.Dataset`
 
-# In[102]:
+# In[24]:
 
 
 import os
@@ -388,7 +388,7 @@ print(train_data.classes, train_data.class_to_idx)
 # 2. Raise an error if the class names aren't found
 # 3. Turn class names into a dict and list and return them
 
-# In[106]:
+# In[25]:
 
 
 # setup path for target directory
@@ -400,7 +400,7 @@ class_names_found = sorted([entry.name for entry in list(os.scandir(target_direc
 class_names_found
 
 
-# In[109]:
+# In[26]:
 
 
 def find_classes(directory: str) -> Tuple[List[str], Dict[str, int]]:
@@ -434,7 +434,7 @@ print(find_classes(target_directory))
 # 5. Overwrite the `__len()__` fn
 # 6. Overwrite the `__getitem()__` fn
 
-# In[110]:
+# In[27]:
 
 
 # Write a custom dataset class (inherits from torch.utils.data.Dataset)
@@ -479,7 +479,7 @@ class ImageFolderCustom(Dataset):
             return img, class_idx # return data, label (X, y)
 
 
-# In[111]:
+# In[28]:
 
 
 # Augment train data
@@ -496,7 +496,7 @@ test_transforms = transforms.Compose([
 ])
 
 
-# In[112]:
+# In[29]:
 
 
 train_data_custom = ImageFolderCustom(targ_dir=train_dir,
@@ -506,7 +506,7 @@ test_data_custom = ImageFolderCustom(targ_dir=test_dir,
 train_data_custom, test_data_custom
 
 
-# In[114]:
+# In[30]:
 
 
 # Check for equality amongst our custom Dataset and ImageFolder Dataset
@@ -517,7 +517,7 @@ print(train_data_custom.class_to_idx == train_data.class_to_idx)
 
 # ### 5.3 Create a fn to display random images from customizerd dataset
 
-# In[116]:
+# In[31]:
 
 
 # 1. Take in a Dataset as well as a list of class names
@@ -562,7 +562,7 @@ def display_random_images(dataset: torch.utils.data.dataset.Dataset,
     #plt.show()
 
 
-# In[117]:
+# In[32]:
 
 
 # Display random images from ImageFolder created Dataset
@@ -572,7 +572,7 @@ display_random_images(train_data,
                       seed=None)
 
 
-# In[118]:
+# In[33]:
 
 
 # Display random images from ImageFolderCustom Dataset
@@ -584,7 +584,7 @@ display_random_images(train_data_custom,
 
 # ### 5.4 turn custom loaded img into DataLoader's
 
-# In[120]:
+# In[34]:
 
 
 # Turn train and test custom Dataset's into DataLoader's
@@ -602,7 +602,7 @@ test_dataloader_custom = DataLoader(dataset=test_data_custom, # use custom creat
 train_dataloader_custom, test_dataloader_custom
 
 
-# In[121]:
+# In[35]:
 
 
 # Get image and label from custom DataLoader
@@ -619,7 +619,7 @@ print(f"Label shape: {label_custom.shape}")
 # 
 # Hope our model learn more generalized
 
-# In[122]:
+# In[36]:
 
 
 from torchvision import transforms
@@ -637,7 +637,7 @@ test_transforms = transforms.Compose([
 ])
 
 
-# In[123]:
+# In[37]:
 
 
 # Get all image paths
@@ -657,7 +657,7 @@ plot_transformed_images(
 
 # ### 7.1 creating transforms and loading data for Model 0
 
-# In[124]:
+# In[38]:
 
 
 # Create simple transform
@@ -667,7 +667,7 @@ simple_transform = transforms.Compose([
 ])
 
 
-# In[125]:
+# In[39]:
 
 
 # 1. Load and transform data
@@ -700,7 +700,7 @@ train_dataloader_simple, test_dataloader_simple
 
 # ### 7.2 Create TinyVGG model class
 
-# In[126]:
+# In[68]:
 
 
 class TinyVGG(nn.Module):
@@ -715,21 +715,21 @@ class TinyVGG(nn.Module):
                       out_channels=hidden_units,
                       kernel_size=3, # how big is the square that's going over the image?
                       stride=1, # default
-                      padding=1), # options = "valid" (no padding) or "same" (output has same shape as input) or int for specific number
+                      padding=0), # options = "valid" (no padding) or "same" (output has same shape as input) or int for specific number
             nn.ReLU(),
             nn.Conv2d(in_channels=hidden_units,
                       out_channels=hidden_units,
                       kernel_size=3,
                       stride=1,
-                      padding=1),
+                      padding=0),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2,
                          stride=2) # default stride value is same as kernel_size
         )
         self.conv_block_2 = nn.Sequential(
-            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=1),
+            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=0),
             nn.ReLU(),
-            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=1),
+            nn.Conv2d(hidden_units, hidden_units, kernel_size=3, padding=0),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
@@ -737,7 +737,7 @@ class TinyVGG(nn.Module):
             nn.Flatten(),
             # Where did this in_features shape come from?
             # It's because each layer of our network compresses and changes the shape of our inputs data.
-            nn.Linear(in_features=hidden_units*16*16,
+            nn.Linear(in_features=hidden_units*13*13,
                       out_features=output_shape)
         )
 
@@ -760,7 +760,7 @@ print(model_0)
 
 # ### 7.3 fw pass on a single img
 
-# In[128]:
+# In[69]:
 
 
 # 1. Get a batch of images and labels from the DataLoader
@@ -784,7 +784,7 @@ print(f"Actual label:\n{label_single}")
 
 # ### 7.4 Use torchinfo to print the model info
 
-# In[129]:
+# In[70]:
 
 
 # Install torchinfo if it's not available, import it if it is
@@ -800,7 +800,7 @@ summary(model_0, input_size=[1, 3, 64, 64]) # do a test pass through of an examp
 
 # ### 7.5 Create train & test loop
 
-# In[130]:
+# In[71]:
 
 
 def train_step(model: torch.nn.Module,
@@ -844,7 +844,7 @@ def train_step(model: torch.nn.Module,
     return train_loss, train_acc
 
 
-# In[131]:
+# In[72]:
 
 
 def test_step(model: torch.nn.Module,
@@ -882,7 +882,7 @@ def test_step(model: torch.nn.Module,
 
 # ### 7.6 Creating a `train()` fn to combine `train_step()` and `test_step()`
 
-# In[ ]:
+# In[73]:
 
 
 from tqdm.auto import tqdm
@@ -930,3 +930,106 @@ def train(model: torch.nn.Module,
     # 6. Return the filled results at the end of the epochs
     return results
 
+
+# ### 7.7 Train and evalue model 0
+
+# In[78]:
+
+
+# Set random seeds
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+
+# Set number of epochs
+NUM_EPOCHS = 5
+
+# Recreate an instance of TinyVGG
+model_0 = TinyVGG(input_shape=3, # number of color channels (3 for RGB)
+                  hidden_units=10,
+                  output_shape=len(train_data.classes)).to(device)
+
+# Setup loss function and optimizer
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(params=model_0.parameters(), lr=0.001)
+
+# Start the timer
+from timeit import default_timer as timer
+start_time = timer()
+
+# Train model_0
+model_0_results = train(model=model_0,
+                        train_dataloader=train_dataloader_simple,
+                        test_dataloader=test_dataloader_simple,
+                        optimizer=optimizer,
+                        loss_fn=loss_fn,
+                        epochs=NUM_EPOCHS)
+
+# End the timer and print out how long it took
+end_time = timer()
+print(f"Total training time: {end_time-start_time:.3f} seconds")
+
+
+# ### 7.8 Plot the loss curves of model 0
+
+# In[75]:
+
+
+# Check the model_0_results keys
+model_0_results.keys()
+
+
+# In[76]:
+
+
+def plot_loss_curves(results: Dict[str, List[float]]):
+    """Plots training curves of a results dictionary.
+
+    Args:
+        results (dict): dictionary containing list of values, e.g.
+            {"train_loss": [...],
+             "train_acc": [...],
+             "test_loss": [...],
+             "test_acc": [...]}
+    """
+
+    # Get the loss values of the results dictionary (training and test)
+    loss = results['train_loss']
+    test_loss = results['test_loss']
+
+    # Get the accuracy values of the results dictionary (training and test)
+    accuracy = results['train_acc']
+    test_accuracy = results['test_acc']
+
+    # Figure out how many epochs there were
+    epochs = range(len(results['train_loss']))
+
+    # Setup a plot
+    plt.figure(figsize=(15, 7))
+
+    # Plot loss
+    plt.subplot(1, 2, 1)
+    plt.plot(epochs, loss, label='train_loss')
+    plt.plot(epochs, test_loss, label='test_loss')
+    plt.title('Loss')
+    plt.xlabel('Epochs')
+    plt.legend()
+
+    # Plot accuracy
+    plt.subplot(1, 2, 2)
+    plt.plot(epochs, accuracy, label='train_accuracy')
+    plt.plot(epochs, test_accuracy, label='test_accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.legend();
+
+
+# In[79]:
+
+
+plot_loss_curves(model_0_results)
+plt.show()
+
+
+# ## 8 What should an ideal loss curve look like?
+# 
+# A good way to troubleshoot a model
