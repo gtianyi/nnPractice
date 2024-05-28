@@ -1139,8 +1139,70 @@ end_time = timer()
 print(f"Total training time: {end_time-start_time:.3f} seconds")
 
 
+# ### 9.4 plot the loss curve of model 1
+
 # In[89]:
 
 
 plot_loss_curves(model_1_results)
+#plt.show()
+
+
+# ### 9.5 Plotting the loss curves of all of our models against each other
+# 
+# * hard coding (what we're doing here)
+# * tensorboard
+# * wandb (weights & bias)
+# * MLFlow
+
+# In[91]:
+
+
+import pandas as pd
+model_0_df = pd.DataFrame(model_0_results)
+model_1_df = pd.DataFrame(model_1_results)
+print(model_0_df)
+
+
+# In[92]:
+
+
+# Setup a plot
+plt.figure(figsize=(15, 10))
+
+# Get number of epochs
+epochs = range(len(model_0_df))
+
+# Plot train loss
+plt.subplot(2, 2, 1)
+plt.plot(epochs, model_0_df["train_loss"], label="Model 0")
+plt.plot(epochs, model_1_df["train_loss"], label="Model 1")
+plt.title("Train Loss")
+plt.xlabel("Epochs")
+plt.legend()
+
+# Plot test loss
+plt.subplot(2, 2, 2)
+plt.plot(epochs, model_0_df["test_loss"], label="Model 0")
+plt.plot(epochs, model_1_df["test_loss"], label="Model 1")
+plt.title("Test Loss")
+plt.xlabel("Epochs")
+plt.legend()
+
+# Plot train accuracy
+plt.subplot(2, 2, 3)
+plt.plot(epochs, model_0_df["train_acc"], label="Model 0")
+plt.plot(epochs, model_1_df["train_acc"], label="Model 1")
+plt.title("Train Accuracy")
+plt.xlabel("Epochs")
+plt.legend()
+
+# Plot test accuracy
+plt.subplot(2, 2, 4)
+plt.plot(epochs, model_0_df["test_acc"], label="Model 0")
+plt.plot(epochs, model_1_df["test_acc"], label="Model 1")
+plt.title("Test Accuracy")
+plt.xlabel("Epochs")
+plt.legend();
+plt.show()
 
