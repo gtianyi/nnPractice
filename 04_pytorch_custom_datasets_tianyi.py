@@ -1204,5 +1204,206 @@ plt.plot(epochs, model_1_df["test_acc"], label="Model 1")
 plt.title("Test Accuracy")
 plt.xlabel("Epochs")
 plt.legend();
-plt.show()
+#plt.show()
 
+
+# ## 11. Making a prediction on a custom image
+# 
+# Make a prediction not in either in training or testing dataset
+
+# In[94]:
+
+
+# Download custom image
+import requests
+
+# Setup custom image path
+custom_image_path = data_path / "04-pizza-dad.jpeg"
+
+# Download the image if it doesn't already exist
+if not custom_image_path.is_file():
+    with open(custom_image_path, "wb") as f:
+        # When downloading from GitHub, need to use the "raw" file link
+        request = requests.get("https://raw.githubusercontent.com/mrdbourke/pytorch-deep-learning/main/images/04-pizza-dad.jpeg")
+        print(f"Downloading {custom_image_path}...")
+        f.write(request.content)
+else:
+    print(f"{custom_image_path} already exists, skipping download.")
+
+
+# ### 11.1 Loading in a custom image with PyTorch
+# 
+# img need to be in same format as the data the model is trained on
+# 
+# * in tensor form with datatype(troch.flot32)
+# * of shape 64x64x3
+# *  on the right device
+
+# In[95]:
+
+
+import torchvision
+
+# Read in custom image
+custom_image_uint8 = torchvision.io.read_image(str(custom_image_path))
+
+# Print out image data
+print(f"Custom image tensor:\n{custom_image_uint8}\n")
+print(f"Custom image shape: {custom_image_uint8.shape}\n")
+print(f"Custom image dtype: {custom_image_uint8.dtype}")
+
+
+# before we use our custom image with our model, we'll need to convert it to the same format as the data our model is trained on.
+
+# In[96]:
+
+
+# Load in custom image and convert the tensor values to float32
+custom_image = torchvision.io.read_image(str(custom_image_path)).type(torch.float32)
+
+# Divide the image pixel values by 255 to get them between [0, 1]
+custom_image = custom_image / 255.
+
+# Print out image data
+print(f"Custom image tensor:\n{custom_image}\n")
+print(f"Custom image shape: {custom_image.shape}\n")
+print(f"Custom image dtype: {custom_image.dtype}")
+
+
+# In[97]:
+
+
+# Plot custom image
+plt.imshow(custom_image.permute(1, 2, 0)) # need to permute image dimensions from CHW -> HWC otherwise matplotlib will error
+plt.title(f"Image shape: {custom_image.shape}")
+plt.axis(False);
+#plt.show()
+
+
+# In[98]:
+
+
+# Create transform pipleine to resize image
+custom_image_transform = transforms.Compose([
+    transforms.Resize((64, 64)),
+])
+
+# Transform target image
+custom_image_transformed = custom_image_transform(custom_image)
+
+# Print out original shape and new shape
+print(f"Original shape: {custom_image.shape}")
+print(f"New shape: {custom_image_transformed.shape}")
+
+
+# In[99]:
+
+
+model_1.eval()
+with torch.inference_mode():
+    # Add an extra dimension to image
+    custom_image_transformed_with_batch_size = custom_image_transformed.unsqueeze(dim=0)
+
+    # Print out different shapes
+    print(f"Custom image transformed shape: {custom_image_transformed.shape}")
+    print(f"Unsqueezed custom image shape: {custom_image_transformed_with_batch_size.shape}")
+
+    # Make a prediction on image with an extra dimension
+    custom_image_pred = model_1(custom_image_transformed.unsqueeze(dim=0).to(device))
+
+
+# In[101]:
+
+
+print(custom_image_pred)
+
+
+# In[102]:
+
+
+# Print out prediction logits
+print(f"Prediction logits: {custom_image_pred}")
+
+# Convert logits -> prediction probabilities (using torch.softmax() for multi-class classification)
+custom_image_pred_probs = torch.softmax(custom_image_pred, dim=1)
+print(f"Prediction probabilities: {custom_image_pred_probs}")
+
+# Convert prediction probabilities -> prediction labels
+custom_image_pred_label = torch.argmax(custom_image_pred_probs, dim=1)
+print(f"Prediction label: {custom_image_pred_label}")
+
+
+# In[105]:
+
+
+# Find the predicted label
+custom_image_pred_class = class_names[custom_image_pred_label.cpu()] # put pred label to CPU, otherwise will error
+print(custom_image_pred_class)
+
+# The values of the prediction probabilities are quite similar
+print(custom_image_pred_probs)
+
+
+# ### 11.3 Putting custom img pred in a fn
+
+# In[106]:
+
+
+def pred_and_plot_image(model: torch.nn.Module,
+                        image_path: str,
+                        class_names: List[str] = None,
+                        transform=None,
+                        device: torch.device = device):
+    """Makes a prediction on a target image and plots the image with its prediction."""
+
+    # 1. Load in image and convert the tensor values to float32
+    target_image = torchvision.io.read_image(str(image_path)).type(torch.float32)
+
+    # 2. Divide the image pixel values by 255 to get them between [0, 1]
+    target_image = target_image / 255.
+
+    # 3. Transform if necessary
+    if transform:
+        target_image = transform(target_image)
+
+    # 4. Make sure the model is on the target device
+    model.to(device)
+
+    # 5. Turn on model evaluation mode and inference mode
+    model.eval()
+    with torch.inference_mode():
+        # Add an extra dimension to the image
+        target_image = target_image.unsqueeze(dim=0)
+
+        # Make a prediction on image with an extra dimension and send it to the target device
+        target_image_pred = model(target_image.to(device))
+
+    # 6. Convert logits -> prediction probabilities (using torch.softmax() for multi-class classification)
+    target_image_pred_probs = torch.softmax(target_image_pred, dim=1)
+
+    # 7. Convert prediction probabilities -> prediction labels
+    target_image_pred_label = torch.argmax(target_image_pred_probs, dim=1)
+
+    # 8. Plot the image alongside the prediction and prediction probability
+    plt.imshow(target_image.squeeze().permute(1, 2, 0)) # make sure it's the right size for matplotlib
+    if class_names:
+        title = f"Pred: {class_names[target_image_pred_label.cpu()]} | Prob: {target_image_pred_probs.max().cpu():.3f}"
+    else:
+        title = f"Pred: {target_image_pred_label} | Prob: {target_image_pred_probs.max().cpu():.3f}"
+    plt.title(title)
+    plt.axis(False);
+
+
+# In[107]:
+
+
+# Pred on our custom image
+pred_and_plot_image(model=model_1,
+                    image_path=custom_image_path,
+                    class_names=class_names,
+                    transform=custom_image_transform,
+                    device=device)
+#plt.show()
+
+
+# ## END
