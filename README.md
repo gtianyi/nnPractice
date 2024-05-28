@@ -16,7 +16,7 @@ brew install jupyter
 ```
 
 ```bash
-pip3 install torch torchvision torchinfo matplotlib Pillow
+pip3 install torch torchvision torchinfo matplotlib Pillow pandas
 ```
 
 ## Useful CMD
