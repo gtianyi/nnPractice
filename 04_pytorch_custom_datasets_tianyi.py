@@ -1027,9 +1027,120 @@ def plot_loss_curves(results: Dict[str, List[float]]):
 
 
 plot_loss_curves(model_0_results)
-plt.show()
+#plt.show()
 
 
 # ## 8 What should an ideal loss curve look like?
 # 
 # A good way to troubleshoot a model
+# * underfitting
+# * overfitting
+# * just right
+
+# ## 9 Model 1: TinVGG with Data Argumentation
+
+# ### 9.1 Create transform with data augmentation
+
+# In[80]:
+
+
+# Create training transform with TrivialAugment
+train_transform_trivial_augment = transforms.Compose([
+    transforms.Resize((64, 64)),
+    transforms.TrivialAugmentWide(num_magnitude_bins=31),
+    transforms.ToTensor()
+])
+
+# Create testing transform (no data augmentation)
+test_transform = transforms.Compose([
+    transforms.Resize((64, 64)),
+    transforms.ToTensor()
+])
+
+
+# ### 9.2 create train and test dataset with argumented data
+
+# In[81]:
+
+
+# Turn image folders into Datasets
+train_data_augmented = datasets.ImageFolder(train_dir, transform=train_transform_trivial_augment)
+test_data_simple = datasets.ImageFolder(test_dir, transform=test_transform)
+
+train_data_augmented, test_data_simple
+
+
+# In[86]:
+
+
+# Turn Datasets into DataLoader's
+import os
+BATCH_SIZE = 32
+NUM_WORKERS = os.cpu_count()
+
+torch.manual_seed(42)
+train_dataloader_augmented = DataLoader(train_data_augmented,
+                                        batch_size=BATCH_SIZE,
+                                        shuffle=True,
+                                        num_workers=NUM_WORKERS)
+
+test_dataloader_simple = DataLoader(test_data_simple,
+                                    batch_size=BATCH_SIZE,
+                                    shuffle=False,
+                                    num_workers=NUM_WORKERS)
+
+print(train_dataloader_augmented, test_dataloader)
+
+
+# ### 9.3 Construct and train model 1
+# 
+# Using the same model architecture except we use argumented data for training
+
+# In[87]:
+
+
+# Create model_1 and send it to the target device
+torch.manual_seed(42)
+model_1 = TinyVGG(
+    input_shape=3,
+    hidden_units=10,
+    output_shape=len(train_data_augmented.classes)).to(device)
+print(model_1)
+
+
+# In[88]:
+
+
+# Set random seeds
+torch.manual_seed(42)
+torch.cuda.manual_seed(42)
+
+# Set number of epochs
+NUM_EPOCHS = 5
+
+# Setup loss function and optimizer
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(params=model_1.parameters(), lr=0.001)
+
+# Start the timer
+from timeit import default_timer as timer
+start_time = timer()
+
+# Train model_1
+model_1_results = train(model=model_1,
+                        train_dataloader=train_dataloader_augmented,
+                        test_dataloader=test_dataloader_simple,
+                        optimizer=optimizer,
+                        loss_fn=loss_fn,
+                        epochs=NUM_EPOCHS)
+
+# End the timer and print out how long it took
+end_time = timer()
+print(f"Total training time: {end_time-start_time:.3f} seconds")
+
+
+# In[89]:
+
+
+plot_loss_curves(model_1_results)
+
